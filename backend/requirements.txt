@@ -1,0 +1,12 @@
+fastapi
+beautifulsoup4
+uvicorn
+cohere
+openai
+pinecone
+qdrant-client
+langchain
+pypdf
+PyPDF2
+unstructured
+pydantic
