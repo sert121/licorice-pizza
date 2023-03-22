@@ -1,7 +1,7 @@
 # licorice-pizza
 Not-so-sweet implementations of embedding search, accompanied by boilerplate UI.
 
-TODOS (some ongoing):
+TODOS (some ongoing):    
 [ ] setup envs for helpers.py in backend.   
 [ ] connect routes with helpers.py for FastAPI.   
 [ ] test routes via POSTMAN/httpie.   
