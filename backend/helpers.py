@@ -13,6 +13,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Batch
 from qdrant_client.http import models 
 
+from dotenv import load_dotenv
+load_dotenv()
 
 COHERE_API_KEY = os.environ['COHERE_API_KEY']
 HOST_URL_QDRANT = os.environ['HOST_URL_QDRANT']
@@ -56,7 +58,7 @@ def delete_collection_qdrant(collection_name: str, client_q: QdrantClient):
     print('done--')
 
 
-def query_vecstor_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
+def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
 
     embedded_vectors = cohere_client.embed(model="large",
                                            texts=questions).embeddings
@@ -92,6 +94,7 @@ def create_vec_store_from_text(host:str,local_path_pdf:str, collection_name:str,
 if __name__ == '__main__':
     client_q = QdrantClient(url=HOST_URL_QDRANT,
                             api_key=API_KEY_QDRANT)
-
+    
     cohere_client = cohere.Client(api_key=COHERE_API_KEY)
+
 
