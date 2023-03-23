@@ -59,7 +59,7 @@ def create_collection_qdrant(collection_name:str, client_q: QdrantClient):
         vectors_config=models.VectorParams(size=4096,
                                            distance=models.Distance.COSINE),
     )
-    print('done creating collection ---')
+    logger.info('done creating collection ---')
 
 def get_collection_qdrant(collection_name:str, client_q: QdrantClient):
     details = client_q.get_collection(collection_name=collection_name)
@@ -67,7 +67,7 @@ def get_collection_qdrant(collection_name:str, client_q: QdrantClient):
 
 def delete_collection_qdrant(collection_name: str, client_q: QdrantClient):
     client_q.delete_collection(collection_name=f"{collection_name}")
-    print(f'done deleting {collection_name}--')
+    logger.info(f'done deleting {collection_name}--')
 
 
 def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
@@ -91,7 +91,7 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                limit=k_max,
                                with_payload=True)
     
-    print('------\n', response[0].payload['page_content'], '\n------')
+    # print('------\n', response[0].payload['page_content'], '\n------')
     return response
     
 
