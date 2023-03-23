@@ -16,9 +16,21 @@ from qdrant_client.http import models
 from dotenv import load_dotenv
 load_dotenv()
 
-COHERE_API_KEY = os.environ['COHERE_API_KEY']
-HOST_URL_QDRANT = os.environ['HOST_URL_QDRANT']
-API_KEY_QDRANT = os.environ['API_KEY_QDRANT']
+
+from logging.config import dictConfig
+import logging
+from logging_conf import LogConfig
+
+# Logging
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("indexai")
+
+
+COHERE_API_KEY = os.getenv('COHERE_API_KEY')
+HOST_URL_QDRANT = os.getenv('HOST_URL_QDRANT')
+API_KEY_QDRANT = os.getenv('API_KEY_QDRANT')
+
+
 EMBEDDING_TYPE = 'cohere'
 
 
@@ -55,10 +67,18 @@ def get_collection_qdrant(collection_name:str, client_q: QdrantClient):
 
 def delete_collection_qdrant(collection_name: str, client_q: QdrantClient):
     client_q.delete_collection(collection_name=f"{collection_name}")
-    print('done--')
+    print(f'done deleting {collection_name}--')
 
 
 def query_vector_store_qdrant(collection_name:str, questions:list, client_q: QdrantClient, cohere_client: cohere.Client):
+
+    # double check if collection exists
+    try:
+        details = get_collection_qdrant(collection_name=collection_name,client_q=client_q)
+    except:
+        logger.error('collection does not exist, try creating collection by querying the initialize endpoint')
+        return None
+
 
     embedded_vectors = cohere_client.embed(model="large",
                                            texts=questions).embeddings
@@ -70,17 +90,19 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                query_vector=vectors[0],
                                limit=k_max,
                                with_payload=True)
+    
     print('------\n', response[0].payload['page_content'], '\n------')
     return response
     
 
-def create_vec_store_from_text(host:str,local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False):
-
+def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False, host:str=HOST_URL_QDRANT):
+    logger.info('-- pypdf processing started')
     loader = PyPDFLoader(local_path_pdf)
     pages = loader.load_and_split()
     if use_documents is False:
-        pages = [t.document for t in pages]
+        pages = [t.page_content for t in pages]
     
+    logger.info('-- pages loaded')
     vec_store = Qdrant.from_texts(pages,
                                   embeddings,
                                   collection_name= collection_name,
@@ -89,12 +111,22 @@ def create_vec_store_from_text(host:str,local_path_pdf:str, collection_name:str,
     return vec_store
 
 
+def init_qdrant_client():
+    client_q = QdrantClient(url=HOST_URL_QDRANT,api_key=API_KEY_QDRANT)
+    return client_q 
 
+def init_cohere_client():
+    cohere_client = cohere.Client(api_key=COHERE_API_KEY)
+    return cohere_client
+
+def init_cohere_embeddings():
+    cohere_embeddings = CohereEmbeddings(cohere_api_key=COHERE_API_KEY)
+    return cohere_embeddings
 
 if __name__ == '__main__':
-    client_q = QdrantClient(url=HOST_URL_QDRANT,
-                            api_key=API_KEY_QDRANT)
+    pass
+
     
-    cohere_client = cohere.Client(api_key=COHERE_API_KEY)
+    
 
 
