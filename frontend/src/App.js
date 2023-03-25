@@ -7,7 +7,6 @@ import {
   VStack,
   Code,
   Grid,
-  theme,
 } from '@chakra-ui/react';
 
 import { ColorModeSwitcher } from './ColorModeSwitcher';
@@ -23,12 +22,19 @@ import {
   Router
 } from "react-router-dom";
 import UploadStuff from './components/UploadStuff';
-
 import {BrowserRouter} from "react-router-dom" 
 import SuperTokens, { SuperTokensWrapper, getSuperTokensRoutesForReactRouterDom } from "supertokens-auth-react";
 import Passwordless from "supertokens-auth-react/recipe/passwordless";
 import Session from "supertokens-auth-react/recipe/session";
 import * as reactRouterDom from "react-router-dom";
+import {useColorMode} from '@chakra-ui/react'
+
+
+// import { extendTheme , Button} from '@chakra-ui/react'
+// import { theme as baseTheme } from '@saas-ui/theme-glass'
+
+
+import {theme} from './theme';
 
 
 SuperTokens.init({
@@ -48,12 +54,19 @@ SuperTokens.init({
 });
 
 function App() {
+  // localStorage.setItem('colorMode', JSON.stringify(testObject));
+  localStorage.setItem('chakra-ui-color-mode', 'dark');
+  // localStorage.removeItem('chakra-ui-color-mode');
+  let { colorMode, toggleColorMode } = useColorMode('dark')
+
 return(
+
 
 <BrowserRouter>
 <Routes>
 
-<Route path="/" element={<ChakraProvider><SidebarWithHeader>
+<Route path="/" element={<ChakraProvider theme={theme}><SidebarWithHeader>
+
   <HomeSearch></HomeSearch>
   </SidebarWithHeader></ChakraProvider>} />
 
