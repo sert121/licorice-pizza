@@ -33,6 +33,18 @@ API_KEY_QDRANT = os.getenv('API_KEY_QDRANT')
 
 EMBEDDING_TYPE = 'cohere'
 
+def init_qdrant_client():
+    client_q = QdrantClient(url=HOST_URL_QDRANT,api_key=API_KEY_QDRANT)
+    return client_q 
+
+def init_cohere_client():
+    cohere_client = cohere.Client(api_key=COHERE_API_KEY)
+    return cohere_client
+
+def init_cohere_embeddings():
+    cohere_embeddings = CohereEmbeddings(cohere_api_key=COHERE_API_KEY)
+    return cohere_embeddings
+
 
 def load_data(data_path: str, loader_type: str = 'local') -> list:
 
@@ -110,18 +122,16 @@ def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embedding
                                   api_key=API_KEY_QDRANT)
     return vec_store
 
+def load_vec_store_langchain(client_q:QdrantClient,host=HOST_URL_QDRANT):
 
-def init_qdrant_client():
-    client_q = QdrantClient(url=HOST_URL_QDRANT,api_key=API_KEY_QDRANT)
-    return client_q 
+  store = Qdrant(client=client_q,
+                 embedding_function=embeddings.embed_query,
+                 collection_name=collection_name)
+  logger.info("store--", store)
+  r = store.similarity_search_with_score(query='When was vannevar born')
+  logger.info("Results ----\n", r)
 
-def init_cohere_client():
-    cohere_client = cohere.Client(api_key=COHERE_API_KEY)
-    return cohere_client
 
-def init_cohere_embeddings():
-    cohere_embeddings = CohereEmbeddings(cohere_api_key=COHERE_API_KEY)
-    return cohere_embeddings
 
 if __name__ == '__main__':
     pass

@@ -9,10 +9,48 @@ import {
   useColorModeValue,
   createIcon,
   Input,
+  HStack,
 } from '@chakra-ui/react';
-
+import React from 'react';
+import { IconButton } from '@chakra-ui/react'
+import { AiOutlineFileSearch } from "react-icons/ai";
+import axiosInstance from '../axios';
+import SearchMainCard from './SearchMainCard';
+import { SearchIcon } from '@chakra-ui/icons'
+import { motion } from "framer-motion";
 
 export default function HomeSearch() {
+
+  const [searchValue, setSearchValue] = React.useState('')
+  const [headerVisible, setHeaderVisible] = React.useState(true)
+  const [showCards, setCardsVisible] = React.useState(false)
+
+  // .onclick handler function
+//   useEffect(() => {
+        
+//     async function f1(){
+//         const request = await axiosInstance.get(url);
+//         return request;
+//     }
+//     f1();
+
+//     return () => {
+  
+//     }
+// }, [])
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log('The link was clicked.');
+    setHeaderVisible(!headerVisible)
+    setCardsVisible(!showCards)
+  }
+  //  onchange handler function
+  function handleChange(e) {
+    e.preventDefault();
+    setSearchValue(e.target.value)
+  }
+
   return (
     <>
 
@@ -27,28 +65,36 @@ export default function HomeSearch() {
             fontSize={{ base: '2xl', sm: '4xl', md: '6xl' }}
             lineHeight={'90%'}>
             Search across <hspace></hspace> 
-            <Text as={'span'} color={'green.400'}>
-              legalese
+            <Text as={'span'} color={'purple.400'}>
+              internal databases
             </Text>
           </Heading>
           <Text color={'gray.500'}>
          Simply upload your documents and get started! We'll take care of the rest.
           </Text>
-  
+
+          <HStack>
           <Input 
-                placeholder="Input query ..."
-              isInvalid
+                placeholder="Input query"
+                value={searchValue}
+                onChange={handleChange}
               errorBorderColor='green' border={1} borderColor={'green.500'} variant='outline'>
             </Input>
-      
+            <IconButton aria-label='Search across databases' onClick={handleSubmit} icon={<SearchIcon />} />
+
+          </HStack>
 
           <Stack
             direction={'column'}
             spacing={3}
-            align={'center'}
-            alignSelf={'center'}
+            align={'stretch'}
+            alignSelf={'stretch'}
             position={'relative'}>
+
+            {showCards && 
             
+            
+            <SearchMainCard></SearchMainCard> }
           </Stack>
         </Stack>
       </Container>

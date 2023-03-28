@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 # create pydantic models for langch
 
+
+
 class QueryVectorStore(BaseModel):
     query:str
     collection_name:str
