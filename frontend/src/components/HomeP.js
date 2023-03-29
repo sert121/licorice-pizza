@@ -11,19 +11,52 @@ import {
   Input,
   HStack,
 } from '@chakra-ui/react';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IconButton } from '@chakra-ui/react'
 import { AiOutlineFileSearch } from "react-icons/ai";
 import axiosInstance from '../axios';
 import SearchMainCard from './SearchMainCard';
+import SearchResultCard from './SearchResult';
+import ModalCard from './Modal';
+
+import Card from './ChatCard'
 import { SearchIcon } from '@chakra-ui/icons'
 import { motion } from "framer-motion";
+
 
 export default function HomeSearch() {
 
   const [searchValue, setSearchValue] = React.useState('')
   const [headerVisible, setHeaderVisible] = React.useState(true)
   const [showCards, setCardsVisible] = React.useState(false)
+  const [modalVisible, setModalVisible] = React.useState(false)
+
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
+  const handleClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  
+ 
+  const show = {
+    opacity: 1,
+    display: "block"
+  };
+
+  const hide = {
+    opacity: 0,
+    transitionEnd: {
+      display: "none"
+    }
+  };
+
+  const static_pos = {
+    y:0,
+  }
+  const next_pos = {
+    y:-70
+  }
 
   // .onclick handler function
 //   useEffect(() => {
@@ -44,11 +77,17 @@ export default function HomeSearch() {
     console.log('The link was clicked.');
     setHeaderVisible(!headerVisible)
     setCardsVisible(!showCards)
+
   }
   //  onchange handler function
   function handleChange(e) {
     e.preventDefault();
     setSearchValue(e.target.value)
+  }
+
+  function handleMainCard(e) {
+    e.preventDefault();
+    setModalVisible(!modalVisible)
   }
 
   return (
@@ -69,12 +108,16 @@ export default function HomeSearch() {
               internal databases
             </Text>
           </Heading>
-          <Text color={'gray.500'}>
+          {/* <Text as = {motion.div} 
+                animate={headerVisible ? show : hide} color={'gray.500'}> */}
+                <Text>
          Simply upload your documents and get started! We'll take care of the rest.
           </Text>
 
           <HStack>
+          
           <Input 
+                focusBorderColor='purple.400'
                 placeholder="Input query"
                 value={searchValue}
                 onChange={handleChange}
@@ -91,10 +134,28 @@ export default function HomeSearch() {
             alignSelf={'stretch'}
             position={'relative'}>
 
+              
+
             {showCards && 
             
+            <>
+              <>
+            <SearchMainCard></SearchMainCard>
+              </>
             
-            <SearchMainCard></SearchMainCard> }
+            
+            
+
+              <SearchResultCard body_text={'some_body'}
+              title_text={'some_title'}
+                badge_text={'some_badge'}>
+              
+            </SearchResultCard>
+         
+
+
+            </>
+            }
           </Stack>
         </Stack>
       </Container>
