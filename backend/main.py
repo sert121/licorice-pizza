@@ -9,7 +9,7 @@ import requests
 from langchain.document_loaders import PyPDFLoader
 from models import QueryVectorStore, CollectionName
 from helpers import load_data, create_collection_qdrant, get_collection_qdrant, delete_collection_qdrant, query_vector_store_qdrant, create_vec_store_from_text
-from helpers import init_cohere_client, init_qdrant_client, init_cohere_embeddings
+from helpers import init_cohere_client, init_qdrant_client, init_cohere_embeddings,add_texts_vector_store
 from fastapi import Form
 
 app = FastAPI()
@@ -67,6 +67,31 @@ async def initialize_vec_store(collection_name: Annotated[str,Form()], uploaded_
         return {"info": f"Vec store {collection_name} created"}
     except Exception as e:
         return {"info": f"Collection already exists"}
+
+
+
+@app.post("/api/add_to_store")
+async def add_texts_vec_store(collection_name: Annotated[str,Form()], uploaded_file: UploadFile = File(...)):
+    client_q = init_qdrant_client()
+    cohere_client = init_cohere_client()
+
+    # parse the files
+    file_location = f"./files/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    logger.info(f'successfully saved file {uploaded_file.filename}')
+
+    try:
+        # create collection
+        embeddings = init_cohere_embeddings()
+        # create vector store from text
+        add_texts_vector_store(client_q = client_q,local_path_pdf=file_location, collection_name=collection_name)
+
+        return {"info": f"Vec store {collection_name} fetched"}
+    except Exception as e:
+        return {"info": f"Collection doesnt exist"}
+
+
 
 
 @app.post("/api/query_vec_store")

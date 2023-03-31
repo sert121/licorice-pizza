@@ -12,6 +12,9 @@ from langchain.vectorstores import Qdrant
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Batch
 from qdrant_client.http import models 
+import json 
+import openai
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -29,7 +32,8 @@ logger = logging.getLogger("indexai")
 COHERE_API_KEY = os.getenv('COHERE_API_KEY')
 HOST_URL_QDRANT = os.getenv('HOST_URL_QDRANT')
 API_KEY_QDRANT = os.getenv('API_KEY_QDRANT')
-
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+openai.api_key = OPENAI_API_KEY
 
 EMBEDDING_TYPE = 'cohere'
 
@@ -40,6 +44,10 @@ def init_qdrant_client():
 def init_cohere_client():
     cohere_client = cohere.Client(api_key=COHERE_API_KEY)
     return cohere_client
+
+def openai_client():
+    openai_client = OpenAI()
+    return openai_client
 
 def init_cohere_embeddings():
     cohere_embeddings = CohereEmbeddings(cohere_api_key=COHERE_API_KEY)
@@ -102,6 +110,48 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                query_vector=vectors[0],
                                limit=k_max,
                                with_payload=True)
+    summarized_responses = {'result':[{'summary':'', 'page_content':""} for i in range(5)]}
+    for i in range(len(response)):
+        logger.info(f"#{i} {response[i].payload['page_content'][:10]}")
+        page_content = response[i].payload['page_content']
+        try:
+            # summary = cohere_client.summarize(text=page_content)
+            messages = [
+            {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
+            {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
+            ]
+            prompt = '''Generate a summary for the following text.
+            TEXT: {page_content}
+            SUMMARY:
+            '''
+
+            response_openai = openai.ChatCompletion.create(
+			model="gpt-3.5-turbo", messages=messages, max_tokens=800)
+
+            reply = response_openai['choices'][0]['message']['content']
+
+            logger.info(f"summary: {reply}")
+
+            summarized_responses['result'][i]['summary'] = reply
+            summarized_responses['result'][i]['page_content'] = page_content
+            # logger.info(f"summary: {reply}")
+            # logger.info(f"summary: {summary}")
+        except Exception as exception:
+            logger.error(exception)
+            logger.info("the exception is:...")
+            logger.info(exception)
+            # summary = None
+    
+    return summarized_responses
+    
+    # for result_item  in response[:1]:
+    #     metadata = result_item['payload']['metadata']
+    #     page_content = result_item['payload']['page_content']
+    #     # take the page_content and summarize it using cohere
+    #     summary = cohere_client.summarize(model="large",text=page_content)
+    #     summarized_responses["response"].append(summary)
+    
+    # return summarized_responses
     
     # print('------\n', response[0].payload['page_content'], '\n------')
     return response
@@ -127,11 +177,24 @@ def load_vec_store_langchain(client_q:QdrantClient,host=HOST_URL_QDRANT):
   store = Qdrant(client=client_q,
                  embedding_function=embeddings.embed_query,
                  collection_name=collection_name)
+  
   logger.info("store--", store)
   r = store.similarity_search_with_score(query='When was vannevar born')
   logger.info("Results ----\n", r)
 
+def add_texts_vector_store(client_q,collection_name,local_path_pdf,host=HOST_URL_QDRANT):
+  embeddings = init_cohere_embeddings()
+  logger.info('-- pypdf processing started')
+  loader = PyPDFLoader(local_path_pdf)
+  pages = loader.load_and_split()
+  pages = [t.page_content for t in pages]
 
+  store = Qdrant(client=client_q,
+                 embedding_function=embeddings.embed_query,
+                 collection_name=collection_name)
+  r = store.add_texts(texts = pages)
+  return r
+  
 
 if __name__ == '__main__':
     pass

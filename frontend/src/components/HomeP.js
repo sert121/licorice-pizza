@@ -146,9 +146,9 @@ export default function HomeSearch() {
             
             
 
-              <SearchResultCard body_text={'some_body'}
-              title_text={'some_title'}
-                badge_text={'some_badge'}>
+              <SearchResultCard body_text={'Locust is an open-source load testing tool that allows users to define and run load tests on web applications and APIs. It is written in Python and is designed to simulate thousands of users concurrently interacting with a target system, in order to measure its performance under different loads.'}
+              title_text={'Locust Settings'}
+                badge_text={'Confluence'}>
               
             </SearchResultCard>
          
