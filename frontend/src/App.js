@@ -28,6 +28,7 @@ import Passwordless from "supertokens-auth-react/recipe/passwordless";
 import Session from "supertokens-auth-react/recipe/session";
 import * as reactRouterDom from "react-router-dom";
 import {useColorMode} from '@chakra-ui/react'
+import { SessionAuth } from "supertokens-auth-react/recipe/session";
 
 
 // import { extendTheme , Button} from '@chakra-ui/react'
@@ -36,10 +37,9 @@ import {useColorMode} from '@chakra-ui/react'
 
 import {theme} from './theme';
 
-
 SuperTokens.init({
   appInfo: {
-      appName: "laweyerapp",
+      appName: "licoricepizza",
       apiDomain: "http://localhost:8000",
       websiteDomain: "http://localhost:3000",
       apiBasePath: "/auth",
@@ -53,6 +53,7 @@ SuperTokens.init({
   ]
 });
 
+
 function App() {
   // localStorage.setItem('colorMode', JSON.stringify(testObject));
   localStorage.setItem('chakra-ui-color-mode', 'dark');
@@ -61,25 +62,29 @@ function App() {
 
 return(
 
+<SuperTokensWrapper>
+  <BrowserRouter>
+  <Routes>
 
-<BrowserRouter>
-<Routes>
+  <Route path="/" element={<SessionAuth>
+  <ChakraProvider theme={theme}><SidebarWithHeader>
 
-<Route path="/" element={<ChakraProvider theme={theme}><SidebarWithHeader>
+    <HomeSearch></HomeSearch>
+    </SidebarWithHeader></ChakraProvider>
+    </SessionAuth>
+    } />
 
-  <HomeSearch></HomeSearch>
-  </SidebarWithHeader></ChakraProvider>} />
+  {/* <Route path='/auth'> */}
+        {getSuperTokensRoutesForReactRouterDom(reactRouterDom)}
+  {/* </Route> */}
 
-<Route path='/auth'>
-{getSuperTokensRoutesForReactRouterDom(reactRouterDom)}
-</Route>
+  <Route path="/integrations" element={<ChakraProvider><SidebarWithHeader>
+    <UploadStuff></UploadStuff>
+    </SidebarWithHeader></ChakraProvider>} />
+  </Routes>
 
-<Route path="/integrations" element={<ChakraProvider><SidebarWithHeader>
-  <UploadStuff></UploadStuff>
-  </SidebarWithHeader></ChakraProvider>} />
-</Routes>
-
-</BrowserRouter>
+  </BrowserRouter>
+</SuperTokensWrapper>
 
 );
 

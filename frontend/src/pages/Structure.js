@@ -34,6 +34,9 @@ import {
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { ReactText } from 'react';
+import { signOut } from "supertokens-auth-react/recipe/passwordless";
+
+
 
 const LinkItems= [
   { name: 'Home', icon: FiHome , href: '/'},
@@ -133,6 +136,12 @@ const NavItem = ({ icon, href, children, ...rest }) => {
 };
 
 const MobileNav = ({ onOpen, ...rest }) => {
+
+  async function onLogout() {
+    await signOut();
+    window.location.href = "/";
+  }
+
   return (
     <Flex
       ml={{ base: 0, md: 60 }}
@@ -200,7 +209,7 @@ const MobileNav = ({ onOpen, ...rest }) => {
               <MenuItem>Profile</MenuItem>
               <MenuItem>Settings</MenuItem>
               <MenuDivider />
-              <MenuItem>Sign out</MenuItem>
+              <MenuItem onClick={onLogout}>Sign out</MenuItem>
             </MenuList>
           </Menu>
         </Flex>

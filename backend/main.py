@@ -7,17 +7,58 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import requests
 from langchain.document_loaders import PyPDFLoader
+
 from models import QueryVectorStore, CollectionName
 from helpers import load_data, create_collection_qdrant, get_collection_qdrant, delete_collection_qdrant, query_vector_store_qdrant, create_vec_store_from_text
 from helpers import init_cohere_client, init_qdrant_client, init_cohere_embeddings,add_texts_vector_store
 from fastapi import Form
 
+from supertokens_python.framework.fastapi import get_middleware
+from supertokens_python.recipe import dashboard
+from supertokens_python import get_all_cors_headers
+from supertokens_python import init, InputAppInfo, SupertokensConfig
+from supertokens_python.recipe import passwordless, session
+
+from supertokens_python.recipe.passwordless import ContactEmailOrPhoneConfig
+
+from supertokens_python.recipe.session.framework.fastapi import verify_session
+from supertokens_python.recipe.session import SessionContainer
+from fastapi import Depends
+
 app = FastAPI()
+app.add_middleware(get_middleware())
+
 headers = {
     'user-agent': "IndexAI/0.0.1",
     'Content-Type': "application/json",
     'Accept': "application/json",
 }
+
+init(
+    app_info=InputAppInfo(
+        app_name="licoricepizza",
+        api_domain="http://localhost:8000",
+        website_domain="http://localhost:3000",
+        api_base_path="/auth",
+        website_base_path="/auth"
+    ),
+    supertokens_config=SupertokensConfig(
+        # https://try.supertokens.com is for demo purposes. Replace this with the address of your core instance (sign up on supertokens.com), or self host a core.
+        connection_uri="https://dev-90d7f2d1db0e11ed929a3966c2673b3c-us-east-1.aws.supertokens.io:3571",
+        api_key="piDpBm86K25pfkOwT7gzMJxRbl4Ius"
+    ),
+    framework='fastapi',
+    recipe_list=[
+        dashboard.init(),
+        session.init(), # initializes session features
+        passwordless.init(
+            flow_type="USER_INPUT_CODE",
+            contact_config=ContactEmailOrPhoneConfig()
+        ),
+    ],
+    mode='asgi' # use wsgi if you are running using gunicorn
+)
+
 
 
 # Logging
@@ -34,12 +75,16 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"] + get_all_cors_headers(),
 )
 
 
+
 @app.get("/api")
-def read_root():
+def read_root(session: SessionContainer = Depends(verify_session())):
+    
+    user_id = session.get_user_id()
+    print(user_id)
     return {"Hello": "World"}
 
 
@@ -112,7 +157,6 @@ async def query_vec_store(body: QueryVectorStore):
         return {"error": e}
 
     # response = query_vector_store_qdrant(collection_name=collection_name, questions=[query], client_q=client_q, cohere_client=cohere_client)
-
 
 @app.post("/api/upload_file")
 async def upload_file(uploaded_file: UploadFile = File(...)):
