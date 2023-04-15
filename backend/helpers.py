@@ -110,38 +110,43 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
                                query_vector=vectors[0],
                                limit=k_max,
                                with_payload=True)
-    summarized_responses = {'result':[{'summary':'', 'page_content':""} for i in range(5)]}
+    summarized_responses = {'result':[]}
     for i in range(len(response)):
-        logger.info(f"#{i} {response[i].payload['page_content'][:10]}")
+        logger.info(f"#{i} {response[i].payload['page_content']}")
         page_content = response[i].payload['page_content']
         try:
-            # summary = cohere_client.summarize(text=page_content)
-            messages = [
-            {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
-            {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
-            ]
-            prompt = '''Generate a summary for the following text.
-            TEXT: {page_content}
-            SUMMARY:
-            '''
+            summary = cohere_client.summarize(text=page_content)
 
-            response_openai = openai.ChatCompletion.create(
-			model="gpt-3.5-turbo", messages=messages, max_tokens=800)
 
-            reply = response_openai['choices'][0]['message']['content']
+            # messages = [
+            # {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
+            # {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
+            # ]
+            # prompt = '''Generate a summary for the following text.
+            # TEXT: {page_content}
+            # SUMMARY:
+            # '''
 
-            logger.info(f"summary: {reply}")
+            # response_openai = openai.ChatCompletion.create(
+			# model="gpt-3.5-turbo", messages=messages, max_tokens=800)
 
-            summarized_responses['result'][i]['summary'] = reply
-            summarized_responses['result'][i]['page_content'] = page_content
+            # reply = response_openai['choices'][0]['message']['content']
+
+
             # logger.info(f"summary: {reply}")
-            # logger.info(f"summary: {summary}")
+
+            # summarized_responses['result'][i]['summary'] = reply
+            # summarized_responses['result'][i]['page_content'] = page_content
+            # logger.info(f"summary: {reply}")
+            logger.info(f"summary: {summary}")
         except Exception as exception:
             logger.error(exception)
             logger.info("the exception is:...")
             logger.info(exception)
             # summary = None
-    
+        d = {'summary':summary.summary,'page_content':page_content}
+        summarized_responses['result'].append(d)
+        
     return summarized_responses
     
     # for result_item  in response[:1]:
@@ -154,7 +159,7 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
     # return summarized_responses
     
     # print('------\n', response[0].payload['page_content'], '\n------')
-    return response
+    # return response
     
 
 def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False, host:str=HOST_URL_QDRANT):
@@ -167,7 +172,7 @@ def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embedding
     logger.info('-- pages loaded')
     vec_store = Qdrant.from_texts(pages,
                                   embeddings,
-                                  collection_name= collection_name,
+                                  collection_name=collection_name,
                                   url=host,
                                   api_key=API_KEY_QDRANT)
     return vec_store

@@ -5,6 +5,7 @@ from logging.config import dictConfig
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import json
 import requests
 from langchain.document_loaders import PyPDFLoader
 
@@ -24,6 +25,9 @@ from supertokens_python.recipe.passwordless import ContactEmailOrPhoneConfig
 from supertokens_python.recipe.session.framework.fastapi import verify_session
 from supertokens_python.recipe.session import SessionContainer
 from fastapi import Depends
+
+from qdrant_client.http import models 
+
 
 app = FastAPI()
 app.add_middleware(get_middleware())
@@ -82,11 +86,61 @@ app.add_middleware(
 
 @app.get("/api")
 def read_root(session: SessionContainer = Depends(verify_session())):
-    
     user_id = session.get_user_id()
     print(user_id)
     return {"Hello": "World"}
 
+
+'''
+Final function that is used to adding doc regardless of the collection_name existing or not
+'''
+@app.post("/api/add_docs")
+async def add_docs(collection_name: Annotated[str,Form()], uploaded_file: UploadFile = File(...), session: SessionContainer = Depends(verify_session())):
+    
+    user_id = session.get_user_id()
+    logger.info(f'user name {session.get_user_id()}')
+    collection_name = f'{user_id}_{collection_name}'
+    
+    newpath = f'./files/{user_id}'
+
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+
+    client_q = init_qdrant_client()
+    cohere_client = init_cohere_client()
+
+    file_location = f"./files/{user_id}/{uploaded_file.filename}"
+    try:
+        with open(file_location, "wb+") as file_object:
+            file_object.write(uploaded_file.file.read())
+        logger.info(f'successfully saved file {uploaded_file.filename}')
+    except Exception as e:
+        logger.info(f'error saving file {uploaded_file.filename}')
+        return {"info": f"Error saving file {uploaded_file.filename}"}
+    
+    try:
+        results = client_q.get_collection(collection_name=collection_name)
+        d = results.json()
+        d2 = json.loads(d)
+        if d2['status'] =='green':
+            add_texts_vector_store(client_q = client_q,local_path_pdf=file_location, collection_name=collection_name)
+            return {"info": f"Docs added to {collection_name}"}
+        
+    except Exception as e:
+        # there was no collection by this name
+
+        create_collection_qdrant(collection_name=collection_name, client_q=client_q)
+        logger.info(f'created collection ..step 1')
+        # create vector store from text
+        # create_vec_store_from_text(local_path_pdf=file_location, collection_name=collection_name, embeddings=embeddings)
+        add_texts_vector_store(client_q = client_q,local_path_pdf=file_location, collection_name=collection_name)
+        logger.info(f'created vector store {collection_name} ..step 2')
+        return {"info": f"Vec store {collection_name} created, and docs were added."}
+
+
+    #     return {"info": f"Vec store {collection_name} created, and docs were added."}
+    
+    #check whether a collection exists
 
 @app.post("/api/initalize_store")
 async def initialize_vec_store(collection_name: Annotated[str,Form()], uploaded_file: UploadFile = File(...)):
@@ -101,22 +155,23 @@ async def initialize_vec_store(collection_name: Annotated[str,Form()], uploaded_
 
     try:
         # create collection
-        create_collection_qdrant(
-            collection_name=collection_name, client_q=client_q)
-        logger.info(f'created collection {collection_name}')
+        create_collection_qdrant(collection_name=collection_name, client_q=client_q)
         embeddings = init_cohere_embeddings()
         # create vector store from text
         create_vec_store_from_text(local_path_pdf=file_location, collection_name=collection_name,
                                    embeddings=embeddings)
+        
         logger.info(f'created vector store {collection_name}')
         return {"info": f"Vec store {collection_name} created"}
     except Exception as e:
-        return {"info": f"Collection already exists"}
+        return {"info": f"{e}"}
 
 
 
 @app.post("/api/add_to_store")
 async def add_texts_vec_store(collection_name: Annotated[str,Form()], uploaded_file: UploadFile = File(...)):
+    
+    # user_id = session.get_user_id()
     client_q = init_qdrant_client()
     cohere_client = init_cohere_client()
 
@@ -124,7 +179,7 @@ async def add_texts_vec_store(collection_name: Annotated[str,Form()], uploaded_f
     file_location = f"./files/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
-    logger.info(f'successfully saved file {uploaded_file.filename}')
+    logger.info(f'successfully saved file for  as {uploaded_file.filename}')
 
     try:
         # create collection
