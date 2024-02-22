@@ -1,8 +1,9 @@
 # licorice-pizza
 
-Not-so-sweet implementations of embedding search, accompanied by boilerplate UI.
+Not-so-sweet implementations of vector search, accompanied by boilerplate UI.
+This web-app allows for semantic search across documents, emails, notes and third-party links across integrations like Notion, PDFs, and Google Drive. Search is primarily driven by Cohere Embeddings. We also pair up an LLM enabled via the CohereAPI to allow seamless Q/A over the knowledge base of the user/organization.
 
-## TODOS (some ongoing)
+## TODOS 
 
 - [x] setup envs for helpers.py in backend.
 - [x] connect routes with helpers.py for FastAPI.
