@@ -118,26 +118,6 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
             summary = cohere_client.summarize(text=page_content)
 
 
-            # messages = [
-            # {"role": "system", "content": "You are a helpful assistant who is excellent at summarizing content of different types. Make sure you retain the most relevant details while summarizing."},
-            # {"role": "user", "content": f"Summarize this text for me. Text: {page_content[:700]}"}
-            # ]
-            # prompt = '''Generate a summary for the following text.
-            # TEXT: {page_content}
-            # SUMMARY:
-            # '''
-
-            # response_openai = openai.ChatCompletion.create(
-			# model="gpt-3.5-turbo", messages=messages, max_tokens=800)
-
-            # reply = response_openai['choices'][0]['message']['content']
-
-
-            # logger.info(f"summary: {reply}")
-
-            # summarized_responses['result'][i]['summary'] = reply
-            # summarized_responses['result'][i]['page_content'] = page_content
-            # logger.info(f"summary: {reply}")
             logger.info(f"summary: {summary}")
         except Exception as exception:
             logger.error(exception)
@@ -148,18 +128,6 @@ def query_vector_store_qdrant(collection_name:str, questions:list, client_q: Qdr
         summarized_responses['result'].append(d)
         
     return summarized_responses
-    
-    # for result_item  in response[:1]:
-    #     metadata = result_item['payload']['metadata']
-    #     page_content = result_item['payload']['page_content']
-    #     # take the page_content and summarize it using cohere
-    #     summary = cohere_client.summarize(model="large",text=page_content)
-    #     summarized_responses["response"].append(summary)
-    
-    # return summarized_responses
-    
-    # print('------\n', response[0].payload['page_content'], '\n------')
-    # return response
     
 
 def create_vec_store_from_text(local_path_pdf:str, collection_name:str,embeddings,use_documents:bool=False, host:str=HOST_URL_QDRANT):
